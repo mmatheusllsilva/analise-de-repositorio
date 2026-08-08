@@ -4,7 +4,7 @@
   "description": "Análise de repositórios GitHub para segurança, qualidade de código e boas práticas.",
   "version": "0.1.0",
   "permissions": ["storage", "activeTab", "scripting", "identity", "tabs"],
-  "host_permissions": ["https://github.com/*", "https://*.supabase.co/*"],
+  "host_permissions": ["https://github.com/*", "https://*.supabase.co/*", "https://analise-de-repositorio.vercel.app/*"],
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "GitHub IA Analyzer"

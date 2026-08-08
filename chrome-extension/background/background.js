@@ -43,20 +43,33 @@ async function startGitHubLogin() {
       // `redirectUrl` conterá os parâmetros enviados pelo provedor/Supabase.
       // Normalmente inclui um `code` que precisa ser trocado por tokens
       // usando a `service_role` key do Supabase — essa troca deve ocorrer
-      // em backend seguro. Aqui salvamos o `redirectUrl`/`code` em storage
-      // como um placeholder de sessão para que o popup saiba que o fluxo
-      // foi concluído pelo usuário.
+      // em backend seguro.
       try {
         const urlObj = new URL(redirectUrl);
         const code = urlObj.searchParams.get('code');
-        const provider = urlObj.searchParams.get('provider');
+        if (!code) {
+          reject(new Error('OAuth callback não retornou código.'));
+          return;
+        }
 
-        const sessionPlaceholder = { code, provider, redirectUrl };
-        chrome.storage.local.set({ supabase_oauth: sessionPlaceholder }, () => {
-          // Notifica popup para atualizar UI
-          chrome.runtime.sendMessage({ type: 'AUTH_UPDATED' });
+        const { saveSession } = await import('../util/auth/auth.js');
+        const backendUrl = 'https://analise-de-repositorio.vercel.app/api/auth/exchange';
+
+        const exchangeResponse = await fetch(backendUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, redirect_uri: redirectUri }),
         });
 
+        if (!exchangeResponse.ok) {
+          const errorText = await exchangeResponse.text();
+          throw new Error(`Falha na troca de código: ${exchangeResponse.status} ${errorText}`);
+        }
+
+        const session = await exchangeResponse.json();
+        await saveSession(session);
+
+        chrome.runtime.sendMessage({ type: 'AUTH_UPDATED' });
         resolve();
       } catch (err) {
         reject(err);
