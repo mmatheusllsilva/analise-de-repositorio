@@ -1,4 +1,5 @@
 import { analyzeRepository } from '../lib/ai.js';
+import { getRepoMeta, getRepoTreeFiles, fetchFileContent } from '../lib/github.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,9 +7,61 @@ export default async function handler(req, res) {
     return;
   }
 
-  const payload = req.body;
-  // payload: { repoFullName, files: [{ path, content }] }
+  const body = req.body || {};
+  const repoFullName = body.repoFullName || body.full_name || body.fullName;
+  const providerToken = body.provider_token || body.providerToken || (req.headers.authorization || '').replace(/^[Bb]earer\s+/, '').trim();
 
-  const analysis = await analyzeRepository(payload);
-  res.status(200).json({ analysis });
+  if (!repoFullName) {
+    res.status(400).json({ error: 'Missing repoFullName in request body' });
+    return;
+  }
+  if (!providerToken) {
+    res.status(400).json({ error: 'Missing provider_token (GitHub token) in body or Authorization header' });
+    return;
+  }
+
+  try {
+    // 1) Find default branch
+    const meta = await getRepoMeta(repoFullName, providerToken);
+    const branch = meta.default_branch || 'main';
+
+    // 2) Get tree and filter candidate files
+    const candidates = await getRepoTreeFiles(repoFullName, branch, providerToken);
+    if (!candidates || candidates.length === 0) {
+      res.status(400).json({ error: 'No code files found in repository or repository is empty' });
+      return;
+    }
+
+    // 3) Fetch contents for top N candidates to determine sizes (limit initial fetches)
+    const fetchLimit = 50;
+    const toFetch = candidates.slice(0, fetchLimit);
+
+    const fetched = await Promise.all(toFetch.map(async c => {
+      try {
+        const content = await fetchFileContent(repoFullName, c.path, providerToken);
+        return { path: c.path, content, size: content.length };
+      } catch (err) {
+        return null;
+      }
+    }));
+
+    const validFiles = (fetched.filter(Boolean)).sort((a,b) => b.size - a.size);
+    const maxFiles = 15;
+    const selected = validFiles.slice(0, maxFiles);
+    const partial = validFiles.length > maxFiles || candidates.length > maxFiles;
+
+    // 4) Prepare payload for AI
+    const aiPayload = {
+      repoFullName,
+      providerToken,
+      files: selected.map(f => ({ path: f.path, content: f.content })),
+    };
+
+    const analysis = await analyzeRepository(aiPayload);
+
+    res.status(200).json({ analysis, partial, candidate_count: candidates.length, analyzed_files: selected.length });
+  } catch (err) {
+    console.error('Analyze error', err);
+    res.status(500).json({ error: 'Analysis failed', details: String(err) });
+  }
 }

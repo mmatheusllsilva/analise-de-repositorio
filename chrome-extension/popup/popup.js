@@ -4,6 +4,9 @@
 import { getSession, clearSession } from '../util/auth/auth.js';
 import { fetchUserRepos } from '../util/github.js';
 
+// Estado local do popup: repositório selecionado atualmente
+let selectedRepo = null;
+
 const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const notLogged = document.getElementById('not-logged-in');
@@ -45,6 +48,9 @@ async function render() {
     notLogged.style.display = 'block';
     logged.style.display = 'none';
   }
+
+  // Atualiza ações de análise sempre que a UI é renderizada
+  renderAnalysisActions();
 }
 
 function renderRepoList(repos) {
@@ -76,16 +82,69 @@ function renderRepoList(repos) {
     li.appendChild(desc);
 
     li.addEventListener('click', () => {
-      // Marca visualmente como selecionado
-      document.querySelectorAll('.repo-item.selected').forEach(el => el.classList.remove('selected'));
-      li.classList.add('selected');
-      li.style.background = '#eef';
+        // Marca visualmente como selecionado e guarda o repositório selecionado
+        document.querySelectorAll('.repo-item.selected').forEach(el => el.classList.remove('selected'));
+        li.classList.add('selected');
+        li.style.background = '#eef';
+        selectedRepo = r;
+        // Atualiza a seção de ações para mostrar o botão de analisar
+        renderAnalysisActions();
     });
 
     ul.appendChild(li);
   });
 
   repoSection.appendChild(ul);
+}
+
+// Renderiza o botão de "Analisar repositório" quando houver um repositório selecionado
+function renderAnalysisActions() {
+  const actions = document.getElementById('analysis-actions');
+  actions.innerHTML = '';
+
+  if (!selectedRepo) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'analyze-repo-btn';
+  btn.textContent = 'Analisar repositório';
+  btn.style.padding = '8px 12px';
+  btn.style.marginTop = '8px';
+
+  btn.addEventListener('click', async () => {
+    // Estado de carregamento ao iniciar a análise
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Analisando... isso pode levar alguns segundos';
+    try {
+      // Chama o backend /api/analyze com full_name e provider_token
+      const session = await getSession();
+      if (!session || !session.provider_token) throw new Error('Sessão inválida ou token ausente');
+
+      const resp = await fetch('https://analise-de-repositorio.vercel.app/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoFullName: selectedRepo.full_name || selectedRepo.name, provider_token: session.provider_token }),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`Análise falhou: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      const analysis = data.analysis || data.analysis?.files || data;
+      renderAnalysisResult(data);
+    } catch (err) {
+      console.error('Erro durante análise', err);
+      const result = document.getElementById('analysis-result');
+      result.innerHTML = `<div class="analysis-error">Erro na análise: ${String(err)}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  });
+
+  actions.appendChild(btn);
 }
 
 loginBtn.addEventListener('click', () => {
@@ -106,3 +165,51 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 window.addEventListener('DOMContentLoaded', render);
+
+// Renderiza os resultados da análise retornados pelo backend/IA
+function renderAnalysisResult(response) {
+  const container = document.getElementById('analysis-result');
+  container.innerHTML = '';
+
+  if (!response) {
+    container.textContent = 'Nenhum resultado disponível.';
+    return;
+  }
+
+  if (response.error) {
+    container.innerHTML = `<div class="analysis-error">Erro: ${response.error}</div>`;
+    return;
+  }
+
+  const analysis = response.analysis?.files || response.analysis || response.files || response;
+  if (!Array.isArray(analysis) || analysis.length === 0) {
+    container.innerHTML = '<div class="analysis-empty">Nenhum problema encontrado ou análise vazia.</div>';
+    return;
+  }
+
+  analysis.forEach(fileReport => {
+    const fileDiv = document.createElement('div');
+    fileDiv.className = 'file-report';
+    const h = document.createElement('h4');
+    h.textContent = fileReport.arquivo || fileReport.path || 'arquivo';
+    fileDiv.appendChild(h);
+
+    const problemas = fileReport.problemas || [];
+    if (problemas.length === 0) {
+      const ok = document.createElement('div');
+      ok.textContent = 'Nenhum problema encontrado.';
+      ok.style.color = 'green';
+      fileDiv.appendChild(ok);
+    } else {
+      const ul = document.createElement('ul');
+      problemas.forEach(p => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>[${p.categoria}] ${p.severidade.toUpperCase()}</strong> - ${p.explicacao}<br/><em>Sugestão:</em> ${p.sugestao}`;
+        ul.appendChild(li);
+      });
+      fileDiv.appendChild(ul);
+    }
+
+    container.appendChild(fileDiv);
+  });
+}
