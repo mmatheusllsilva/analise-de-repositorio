@@ -5,6 +5,14 @@
   box-sizing: border-box;
 }
 
+/* Popup sizing variables */
+:root {
+  --popup-width: 480px;
+  --popup-max-width: 500px;
+  /* total popup outer height (includes body padding) - set fixed so native popup has a base size */
+  --popup-height: 632px; /* #app max-height 600px + body vertical padding 32px */
+}
+
 *, *::before, *::after {
   box-sizing: inherit;
 }
@@ -12,21 +20,24 @@
 html, body {
   margin: 0;
   min-width: 360px;
-  /* Increase popup width close to Chrome practical limits but stay safe */
-  width: 480px;
-  max-width: 500px;
+  /* Use CSS variables for consistent sizing */
+  width: var(--popup-width);
+  max-width: var(--popup-max-width);
   color: #1A1A2E;
   background: #FFF3F0;
-  overflow-x: hidden;
+  /* Fixed outer popup height so the native popup won't collapse while JS loads */
+  height: var(--popup-height);
+  /* Prevent body/html from scrolling - only #app will scroll */
+  overflow: hidden;
 }
 
 body {
   padding: 16px;
   font-size: 13px;
   line-height: 1.5;
-  /* allow popup to scroll vertically when content exceeds available height */
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* Fixed height matching html so the popup has a base size before JS runs */
+  height: var(--popup-height);
+  overflow: hidden;
 }
 
 /* Ensure #app always has a sensible minimum height so the Chrome popup
@@ -38,8 +49,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* keep a visible min height but allow scrolling within the app container */
   min-height: 480px;
-  max-height: 600px;
+  max-height: 600px; /* internal scrolling area */
+  /* ensure #app fits inside the fixed body height (body padding 16px top+bottom = 32px) */
+  height: calc(var(--popup-height) - 32px);
   width: 100%;
   overflow-y: auto;
   overflow-x: hidden;
@@ -85,8 +99,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .user-row {
@@ -106,6 +121,20 @@ body {
   display: grid;
   gap: 2px;
   min-width: 0;
+  overflow: hidden;
+}
+
+.user-name {
+  font-weight: 700;
+  color: #1A1A2E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-card > button {
+  flex: 0 0 auto;
+  margin-left: 8px;
 }
 
 .user-name {
@@ -179,12 +208,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+  /* Make loading overlay sufficiently tall so popup has visible size instantly */
+  min-height: 200px;
   color: #6B7280;
   font-weight: 700;
   background: transparent;
   width: 100%;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .accent-coral {

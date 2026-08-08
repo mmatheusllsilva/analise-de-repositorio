@@ -50,8 +50,19 @@ async function render() {
     userName.textContent = 'Logado (pendente)';
     userAvatar.src = '';
     } else {
+      // No valid session: show only login state and clear all other sections
       notLogged.style.display = 'block';
       logged.style.display = 'none';
+
+      // Clear selection and analysis UI to avoid showing stale data
+      selectedRepoFullName = null;
+      selectedRepoObj = null;
+      const repoSection = document.getElementById('repo-selection');
+      const actions = document.getElementById('analysis-actions');
+      const result = document.getElementById('analysis-result');
+      if (repoSection) repoSection.innerHTML = '';
+      if (actions) actions.innerHTML = '';
+      if (result) result.innerHTML = '';
     }
   } finally {
     // hide loading overlay once initial render logic completes (success or error)

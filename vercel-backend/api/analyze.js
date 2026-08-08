@@ -26,12 +26,14 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('Analyze request received for repo:', repoFullName);
     // 1) Find default branch
     const meta = await getRepoMeta(repoFullName, providerToken);
     const branch = meta.default_branch || 'main';
 
     // 2) Get tree and filter candidate files
     const candidates = await getRepoTreeFiles(repoFullName, branch, providerToken);
+    console.log(`Candidates in tree for ${repoFullName}:`, Array.isArray(candidates) ? candidates.length : String(candidates));
     if (!candidates || candidates.length === 0) {
       res.status(400).json({ error: 'No code files found in repository or repository is empty' });
       return;
@@ -54,6 +56,7 @@ export default async function handler(req, res) {
     const maxFiles = 10;
     const selected = validFiles.slice(0, maxFiles);
     const partial = validFiles.length > maxFiles || candidates.length > maxFiles;
+    console.log(`Repository ${repoFullName} - candidates before filter: ${candidates.length}, valid fetched: ${validFiles.length}, selected for analysis: ${selected.length}`);
 
     // 4) Prepare payload for AI
     const aiPayload = {
@@ -62,7 +65,15 @@ export default async function handler(req, res) {
       files: selected.map(f => ({ path: f.path, content: f.content })),
     };
 
-    const analysis = await analyzeRepository(aiPayload);
+    let analysis;
+    try {
+      analysis = await analyzeRepository(aiPayload);
+      console.log(`AI analysis succeeded for ${repoFullName}`);
+    } catch (aiErr) {
+      console.error(`AI analysis failed for ${repoFullName}:`, aiErr);
+      res.status(500).json({ error: 'AI analysis failed', details: String(aiErr) });
+      return;
+    }
 
     res.status(200).json({ analysis, partial, candidate_count: candidates.length, analyzed_files: selected.length });
   } catch (err) {
