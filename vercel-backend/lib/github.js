@@ -39,18 +39,20 @@ export async function getRepoTreeFiles(repoFullName, branch, token) {
   const data = await resp.json();
   const tree = data.tree || [];
 
-  const includeExt = ['.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.go', '.rb', '.php', '.rs', '.c', '.cpp', '.cs', '.swift', '.kt', '.m', '.scala'];
+  const includeExt = ['.js', '.ts', '.jsx', '.tsx', '.mjs', '.cjs', '.py', '.java', '.go', '.rb', '.php', '.rs', '.c', '.cpp', '.h', '.hpp', '.cs', '.swift', '.kt', '.kts', '.dart', '.scala', '.sh', '.sql', '.html', '.css', '.scss', '.sass', '.less', '.vue', '.svelte', '.json', '.yml', '.yaml'];
+  const includeFilenames = ['Dockerfile', '.env.example'];
   const excludePaths = ['node_modules/', 'dist/', 'build/', '.git/', 'venv/', '__pycache__/', 'vendor/'];
-  const excludeExt = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.dll', '.exe', '.bin', '.pdf', '.zip', '.tar', '.gz', '.jar'];
 
   const candidates = tree.filter(item => item.type === 'blob' && item.path).filter(item => {
     const path = item.path;
+    const lowerPath = path.toLowerCase();
     // exclude paths
     for (const ex of excludePaths) if (path.includes(ex)) return false;
-    // exclude by extension
-    for (const ex of excludeExt) if (path.toLowerCase().endsWith(ex)) return false;
-    // include by extension
-    for (const ext of includeExt) if (path.toLowerCase().endsWith(ext)) return true;
+    // include by extension allowlist
+    for (const ext of includeExt) if (lowerPath.endsWith(ext)) return true;
+    // include special filenames without extension
+    const fileName = path.split('/').pop();
+    if (includeFilenames.includes(fileName)) return true;
     return false;
   }).map(item => ({ path: item.path, url: item.url, size: item.size || 0 }));
 

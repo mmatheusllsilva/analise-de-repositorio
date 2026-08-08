@@ -71,14 +71,29 @@ function renderRepoList(repos) {
     li.style.cursor = 'pointer';
 
     const title = document.createElement('div');
+    title.className = 'repo-title';
     title.textContent = r.full_name || r.name;
     title.style.fontWeight = '600';
 
     const desc = document.createElement('div');
+    desc.className = 'repo-description';
     desc.textContent = r.description || '';
     desc.style.fontSize = '12px';
     desc.style.color = '#444';
 
+    const icon = document.createElement('span');
+    icon.className = 'repo-icon';
+    icon.textContent = '✓';
+    icon.style.display = 'none';
+
+    if (selectedRepoFullName && (r.full_name === selectedRepoFullName || r.name === selectedRepoFullName)) {
+      li.classList.add('selected');
+      li.style.background = '#2563eb';
+      icon.style.display = 'inline-block';
+      selectedRepoObj = r;
+    }
+
+    li.appendChild(icon);
     li.appendChild(title);
     li.appendChild(desc);
 
@@ -87,9 +102,12 @@ function renderRepoList(repos) {
         document.querySelectorAll('.repo-item.selected').forEach(el => {
           el.classList.remove('selected');
           el.style.background = '';
+          const prevIcon = el.querySelector('.repo-icon');
+          if (prevIcon) prevIcon.style.display = 'none';
         });
         li.classList.add('selected');
-        li.style.background = '#eef';
+        li.style.background = '#2563eb';
+        icon.style.display = 'inline-block';
         selectedRepoFullName = r.full_name || r.name;
         selectedRepoObj = r;
         // Atualiza a seção de ações para mostrar o botão de analisar

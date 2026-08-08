@@ -24,6 +24,28 @@ header {
   margin-top: 12px;
 }
 
+.repo-item {
+  transition: background 0.2s ease, color 0.2s ease, border-left 0.2s ease;
+}
+
+.repo-item.selected {
+  background: #2563eb;
+  color: #fff;
+  border-left: 4px solid #93c5fd;
+}
+
+.repo-item.selected .repo-title,
+.repo-item.selected .repo-description {
+  color: #fff;
+}
+
+.repo-icon {
+  display: inline-block;
+  margin-right: 8px;
+  font-weight: 700;
+  color: #fff;
+}
+
 button {
   cursor: pointer;
 }
