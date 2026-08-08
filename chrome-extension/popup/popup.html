@@ -19,7 +19,7 @@
             <button id="login-btn" class="button-primary">Login com GitHub</button>
           </div>
 
-          <div id="logged-in" class="auth-card hidden">
+          <div id="logged-in" class="auth-card" style="display:none">
             <div class="user-row">
               <img id="user-avatar" alt="avatar" width="36" height="36" />
               <div class="user-text">
@@ -33,9 +33,18 @@
       </header>
 
       <main class="main-content">
-        <section id="repo-selection" class="card-section"></section>
-        <section id="analysis-actions" class="card-section"></section>
-        <section id="analysis-result" class="card-section"></section>
+        <section id="repo-selection" class="card-section accent-coral"></section>
+        <section id="analysis-actions" class="card-section accent-purple"></section>
+        <section id="analysis-result" class="card-section accent-coral"></section>
+        <section id="future-insights" class="card-section accent-purple">
+          <div class="placeholder-card">
+            <div class="placeholder-text">
+              <span class="placeholder-title">Ver insights completos</span>
+              <span class="placeholder-note">Em breve: gráficos e exportação em PDF.</span>
+            </div>
+            <button class="button-secondary" disabled>Ver insights completos</button>
+          </div>
+        </section>
       </main>
     </div>
 

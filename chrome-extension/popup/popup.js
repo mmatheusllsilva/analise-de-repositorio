@@ -60,66 +60,34 @@ function renderRepoList(repos) {
 
   const ul = document.createElement('ul');
   ul.id = 'repo-list';
-  ul.style.listStyle = 'none';
-  ul.style.padding = '0';
 
   repos.forEach(r => {
     const li = document.createElement('li');
     li.className = 'repo-item';
-    li.style.padding = '8px';
-    li.style.borderBottom = '1px solid #eee';
-    li.style.cursor = 'pointer';
 
     const title = document.createElement('div');
     title.className = 'repo-title';
     title.textContent = r.full_name || r.name;
-    title.style.fontWeight = '600';
 
     const desc = document.createElement('div');
     desc.className = 'repo-description';
     desc.textContent = r.description || '';
-    desc.style.fontSize = '12px';
-    desc.style.color = '#444';
-
-    const icon = document.createElement('span');
-    icon.className = 'repo-icon';
-    icon.textContent = '✓';
-    icon.style.display = 'none';
 
     if (selectedRepoFullName && (r.full_name === selectedRepoFullName || r.name === selectedRepoFullName)) {
       li.classList.add('selected');
-      li.style.background = '#2563eb';
-      icon.style.display = 'inline-block';
       selectedRepoObj = r;
     }
 
-    li.appendChild(icon);
     li.appendChild(title);
     li.appendChild(desc);
 
     li.addEventListener('click', () => {
-        // Marca visualmente como selecionado e guarda o repositório selecionado
-        document.querySelectorAll('.repo-item.selected').forEach(el => {
-          el.classList.remove('selected');
-          el.style.background = '';
-          const prevIcon = el.querySelector('.repo-icon');
-          if (prevIcon) prevIcon.style.display = 'none';
-        });
-        li.classList.add('selected');
-        li.style.background = '#2563eb';
-        icon.style.display = 'inline-block';
-        selectedRepoFullName = r.full_name || r.name;
-        selectedRepoObj = r;
-        // Atualiza a seção de ações para mostrar o botão de analisar
-        renderAnalysisActions();
-    });
-
-    // If this repo was previously selected, apply selection styles
-    if (selectedRepoFullName && (r.full_name === selectedRepoFullName || r.name === selectedRepoFullName)) {
+      document.querySelectorAll('.repo-item.selected').forEach(el => el.classList.remove('selected'));
       li.classList.add('selected');
-      li.style.background = '#eef';
+      selectedRepoFullName = r.full_name || r.name;
       selectedRepoObj = r;
-    }
+      renderAnalysisActions();
+    });
 
     ul.appendChild(li);
   });
@@ -127,43 +95,32 @@ function renderRepoList(repos) {
   repoSection.appendChild(ul);
 }
 
-// Renderiza o botão de "Analisar repositório" quando houver um repositório selecionado
 function renderAnalysisActions() {
   const actions = document.getElementById('analysis-actions');
   actions.innerHTML = '';
 
-  if (!selectedRepoFullName) {
-    // Show a disabled button or instruction to select a repo
-    const hint = document.createElement('div');
-    hint.textContent = 'Selecione um repositório para habilitar a análise.';
-    hint.style.fontSize = '12px';
-    hint.style.color = '#666';
-    actions.appendChild(hint);
-    return;
-  }
-
   const btn = document.createElement('button');
   btn.id = 'analyze-repo-btn';
   btn.textContent = 'Analisar repositório';
-  btn.style.padding = '8px 12px';
-  btn.style.marginTop = '8px';
+  btn.className = 'button-primary';
+  btn.disabled = !selectedRepoFullName;
 
-    btn.addEventListener('click', async () => {
-    // Estado de carregamento ao iniciar a análise
+  btn.addEventListener('click', async () => {
+    if (!selectedRepoFullName) {
+      return;
+    }
+
     btn.disabled = true;
     const originalText = btn.textContent;
     btn.textContent = 'Analisando... isso pode levar alguns segundos';
     try {
-      // Chama o backend /api/analyze com full_name e provider_token
       const session = await getSession();
       if (!session || !session.provider_token) throw new Error('Sessão inválida ou token ausente');
-      // Validate that a repo is selected before calling backend
       const repoFullNameToSend = selectedRepoFullName || (selectedRepoObj && (selectedRepoObj.full_name || selectedRepoObj.name));
       if (!repoFullNameToSend) {
         throw new Error('Selecione um repositório primeiro');
       }
 
-      // DEBUG log: mostrar qual repoFullName será enviado
       console.log('DEBUG - calling /api/analyze with repoFullName=', repoFullNameToSend);
 
       const resp = await fetch('https://analise-de-repositorio.vercel.app/api/analyze', {
@@ -178,19 +135,24 @@ function renderAnalysisActions() {
       }
 
       const data = await resp.json();
-      const analysis = data.analysis || data.analysis?.files || data;
       renderAnalysisResult(data);
     } catch (err) {
       console.error('Erro durante análise', err);
       const result = document.getElementById('analysis-result');
       result.innerHTML = `<div class="analysis-error">Erro na análise: ${String(err)}</div>`;
     } finally {
-      btn.disabled = false;
+      btn.disabled = !selectedRepoFullName;
       btn.textContent = originalText;
     }
   });
 
   actions.appendChild(btn);
+
+  if (!selectedRepoFullName) {
+    const hint = document.createElement('div');
+    hint.textContent = 'Selecione um repositório para habilitar a análise.';
+    actions.appendChild(hint);
+  }
 }
 
 loginBtn.addEventListener('click', () => {
