@@ -10,7 +10,8 @@
     "default_title": "GitHub IA Analyzer"
   },
   "background": {
-    "service_worker": "background/background.js"
+    "service_worker": "background/background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
