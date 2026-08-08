@@ -20,24 +20,64 @@ export async function analyzeRepository(payload) {
   const system = `You are a code reviewer assistant. Analyze provided source files for Security, Code Quality, and Best Practices. Respond ONLY with a JSON array where each element has the shape: {"arquivo": "path", "problemas": [{"tipo":"short id","categoria":"seguranca|qualidade|boas_praticas","severidade":"alta|media|baixa","linha_aproximada": <number|null>, "explicacao":"...","sugestao":"..."}]}.
 Do NOT include any additional prose or commentary.`;
 
-  let userPrompt = 'Analyze the following files:\n';
-  for (const f of fileEntries) {
-    userPrompt += `\n--- FILE: ${f.path} ---\n`;
-    userPrompt += f.content + '\n';
+  const batches = [];
+  let currentBatch = [];
+  let currentChars = 0;
+  const maxBatchFiles = 3;
+  const maxBatchChars = 6000;
+
+  for (const file of fileEntries) {
+    const fileChars = file.content.length;
+    const exceedsCharLimit = currentBatch.length > 0 && currentChars + fileChars > maxBatchChars;
+    const exceedsFileLimit = currentBatch.length >= maxBatchFiles;
+    if (exceedsCharLimit || exceedsFileLimit) {
+      batches.push(currentBatch);
+      currentBatch = [];
+      currentChars = 0;
+    }
+    currentBatch.push(file);
+    currentChars += fileChars;
+  }
+  if (currentBatch.length > 0) {
+    batches.push(currentBatch);
   }
 
-  userPrompt += `\nFor each file, list problems found categorized into Security, Code Quality, and Best Practices. Provide approximate line numbers when possible. If no problems, return an empty array for problemas. Return EXACTLY a single JSON array.`;
+  const aggregated = [];
+  const errors = [];
 
-  // Call AI
-  const aiResp = await callAI({ system, prompt: userPrompt });
+  for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
+    const batch = batches[batchIndex];
+    let userPrompt = 'Analyze the following files:\n';
+    for (const f of batch) {
+      userPrompt += `\n--- FILE: ${f.path} ---\n`;
+      userPrompt += f.content + '\n';
+    }
+    userPrompt += `\nFor each file, list problems found categorized into Security, Code Quality, and Best Practices. Provide approximate line numbers when possible. If no problems, return an empty array for problemas. Return EXACTLY a single JSON array.`;
 
-  // Expect aiResp to be a parsed JSON array
-  if (!Array.isArray(aiResp)) {
-    throw new Error('AI returned invalid analysis format (not an array)');
+    try {
+      const aiResp = await callAI({ system, prompt: userPrompt });
+      if (!Array.isArray(aiResp)) {
+        throw new Error('AI returned invalid analysis format (not an array)');
+      }
+      aggregated.push(...aiResp);
+    } catch (err) {
+      errors.push({
+        batch: batchIndex + 1,
+        files: batch.map(f => f.path),
+        error: String(err),
+      });
+    }
+
+    if (batchIndex < batches.length - 1) {
+      await delay(1200);
+    }
   }
 
-  // Normalize and return
-  return { files: aiResp };
+  return { files: aggregated, errors, batch_count: batches.length };
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function callAI({ system, prompt }) {
