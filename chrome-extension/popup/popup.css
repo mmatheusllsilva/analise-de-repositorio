@@ -21,14 +21,17 @@ body {
   padding: 16px;
   font-size: 13px;
   line-height: 1.5;
-  overflow: hidden;
+  /* allow popup to scroll when content exceeds available height */
+  overflow-y: auto;
 }
 
+/* Ensure #app always has a sensible minimum height so the Chrome popup
+   doesn't collapse to zero before JS populates content. */
 #app {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: calc(100vh - 32px);
+  min-height: 220px;
   max-height: calc(100vh - 32px);
   overflow-y: auto;
 }
@@ -154,6 +157,20 @@ button:disabled,
   border: 1px solid rgba(26, 26, 46, 0.12);
   border-radius: 8px;
   padding: 16px;
+}
+
+/* Loading overlay visible immediately on initial HTML render to prevent
+   native popup height collapse while async work runs. */
+.loading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  color: #6B7280;
+  font-weight: 700;
+  background: transparent;
+  width: 100%;
+  margin-bottom: 4px;
 }
 
 .accent-coral {

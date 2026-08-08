@@ -16,8 +16,12 @@ const userName = document.getElementById('user-name');
 const userAvatar = document.getElementById('user-avatar');
 
 async function render() {
-  const session = await getSession();
-  if (session && session.user) {
+  const loadingEl = document.getElementById('popup-loading');
+  if (loadingEl) loadingEl.style.display = 'flex';
+
+  try {
+    const session = await getSession();
+    if (session && session.user) {
     // Exibe informações do usuário (quando disponíveis). Caso o objeto seja
     // apenas um placeholder (ex: contém apenas `code`), mostramos estado
     // logado pendente de troca do código por tokens no backend.
@@ -39,19 +43,22 @@ async function render() {
       const repoSection = document.getElementById('repo-selection');
       repoSection.innerHTML = `<div class="repo-error">Erro ao carregar repositórios: ${String(err)}</div>`;
     }
-  } else if (session && session.code) {
+    } else if (session && session.code) {
     // Código OAuth recebido mas sem sessão trocada ainda.
     notLogged.style.display = 'none';
     logged.style.display = 'flex';
     userName.textContent = 'Logado (pendente)';
     userAvatar.src = '';
-  } else {
-    notLogged.style.display = 'block';
-    logged.style.display = 'none';
+    } else {
+      notLogged.style.display = 'block';
+      logged.style.display = 'none';
+    }
+  } finally {
+    // hide loading overlay once initial render logic completes (success or error)
+    if (loadingEl) loadingEl.style.display = 'none';
+    // Atualiza ações de análise sempre que a UI é renderizada
+    renderAnalysisActions();
   }
-
-  // Atualiza ações de análise sempre que a UI é renderizada
-  renderAnalysisActions();
 }
 
 function renderRepoList(repos) {
