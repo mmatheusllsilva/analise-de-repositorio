@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const providerToken = body.provider_token || body.providerToken || (req.headers.authorization || '').replace(/^[Bb]earer\s+/, '').trim();
 
   if (!repoFullName) {
-    res.status(400).json({ error: 'Missing repoFullName in request body' });
+    res.status(400).json({ error: 'repoFullName é obrigatório' });
     return;
   }
   if (!providerToken) {

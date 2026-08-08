@@ -4,8 +4,9 @@
 import { getSession, clearSession } from '../util/auth/auth.js';
 import { fetchUserRepos } from '../util/github.js';
 
-// Estado local do popup: repositório selecionado atualmente
-let selectedRepo = null;
+// Estado local do popup: repositório selecionado atualmente (guardamos full_name)
+let selectedRepoFullName = null;
+let selectedRepoObj = null;
 
 const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
@@ -83,13 +84,24 @@ function renderRepoList(repos) {
 
     li.addEventListener('click', () => {
         // Marca visualmente como selecionado e guarda o repositório selecionado
-        document.querySelectorAll('.repo-item.selected').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('.repo-item.selected').forEach(el => {
+          el.classList.remove('selected');
+          el.style.background = '';
+        });
         li.classList.add('selected');
         li.style.background = '#eef';
-        selectedRepo = r;
+        selectedRepoFullName = r.full_name || r.name;
+        selectedRepoObj = r;
         // Atualiza a seção de ações para mostrar o botão de analisar
         renderAnalysisActions();
     });
+
+    // If this repo was previously selected, apply selection styles
+    if (selectedRepoFullName && (r.full_name === selectedRepoFullName || r.name === selectedRepoFullName)) {
+      li.classList.add('selected');
+      li.style.background = '#eef';
+      selectedRepoObj = r;
+    }
 
     ul.appendChild(li);
   });
@@ -102,7 +114,15 @@ function renderAnalysisActions() {
   const actions = document.getElementById('analysis-actions');
   actions.innerHTML = '';
 
-  if (!selectedRepo) return;
+  if (!selectedRepoFullName) {
+    // Show a disabled button or instruction to select a repo
+    const hint = document.createElement('div');
+    hint.textContent = 'Selecione um repositório para habilitar a análise.';
+    hint.style.fontSize = '12px';
+    hint.style.color = '#666';
+    actions.appendChild(hint);
+    return;
+  }
 
   const btn = document.createElement('button');
   btn.id = 'analyze-repo-btn';
@@ -110,7 +130,7 @@ function renderAnalysisActions() {
   btn.style.padding = '8px 12px';
   btn.style.marginTop = '8px';
 
-  btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async () => {
     // Estado de carregamento ao iniciar a análise
     btn.disabled = true;
     const originalText = btn.textContent;
@@ -119,11 +139,19 @@ function renderAnalysisActions() {
       // Chama o backend /api/analyze com full_name e provider_token
       const session = await getSession();
       if (!session || !session.provider_token) throw new Error('Sessão inválida ou token ausente');
+      // Validate that a repo is selected before calling backend
+      const repoFullNameToSend = selectedRepoFullName || (selectedRepoObj && (selectedRepoObj.full_name || selectedRepoObj.name));
+      if (!repoFullNameToSend) {
+        throw new Error('Selecione um repositório primeiro');
+      }
+
+      // DEBUG log: mostrar qual repoFullName será enviado
+      console.log('DEBUG - calling /api/analyze with repoFullName=', repoFullNameToSend);
 
       const resp = await fetch('https://analise-de-repositorio.vercel.app/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repoFullName: selectedRepo.full_name || selectedRepo.name, provider_token: session.provider_token }),
+        body: JSON.stringify({ repoFullName: repoFullNameToSend, provider_token: session.provider_token }),
       });
 
       if (!resp.ok) {
