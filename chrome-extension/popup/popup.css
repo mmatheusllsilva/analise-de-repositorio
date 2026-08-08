@@ -1,51 +1,326 @@
-/* Estilos do popup da extensão.
-   Separar HTML, CSS e JS sempre que possível. */
-
 :root {
-  color-scheme: light;
-  font-family: system-ui, sans-serif;
+  font-family: -apple-system, "Segoe UI", Inter, sans-serif;
+  color: #F1F5F9;
+  background: #0F172A;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+html, body {
   margin: 0;
-  padding: 0;
+  min-width: 360px;
+  width: 400px;
+  color: #F1F5F9;
+  background: #0F172A;
 }
 
 body {
-  margin: 0;
   padding: 16px;
-  min-width: 320px;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
 }
 
-header {
-  margin-bottom: 12px;
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100vh;
 }
 
-#repo-selection,
-#analysis-actions,
-#analysis-result {
-  margin-top: 12px;
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand-stack {
+  display: grid;
+  gap: 4px;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  color: #94A3B8;
+  font-size: 12px;
+}
+
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 240px;
+}
+
+.auth-card {
+  background: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-row img {
+  border-radius: 50%;
+  border: 1px solid #334155;
+  background: #0F172A;
+}
+
+.user-text {
+  display: grid;
+  gap: 2px;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.user-label {
+  color: #94A3B8;
+  font-size: 12px;
+}
+
+button,
+.button-primary,
+.button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #F1F5F9;
+  background: #4F46E5;
+  transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+  cursor: pointer;
+}
+
+button:hover,
+.button-primary:hover,
+.button-secondary:hover {
+  background: #4338ca;
+}
+
+button:active,
+.button-primary:active,
+.button-secondary:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-secondary {
+  background: transparent;
+  color: #F1F5F9;
+  border-color: #334155;
+}
+
+.main-content {
+  display: grid;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.card-section {
+  background: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.card-section:not(:empty) {
+  min-height: 72px;
+}
+
+#repo-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#repo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
 }
 
 .repo-item {
-  transition: background 0.2s ease, color 0.2s ease, border-left 0.2s ease;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  background: #162339;
+}
+
+.repo-item:hover {
+  border-color: #4F46E5;
 }
 
 .repo-item.selected {
-  background: #2563eb;
-  color: #fff;
-  border-left: 4px solid #93c5fd;
+  background: rgba(79, 70, 229, 0.14);
+  border-color: #4F46E5;
 }
 
-.repo-item.selected .repo-title,
-.repo-item.selected .repo-description {
-  color: #fff;
+.repo-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F8FAFC;
+}
+
+.repo-description {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #94A3B8;
 }
 
 .repo-icon {
-  display: inline-block;
-  margin-right: 8px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #4F46E5;
   color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 10px;
 }
 
-button {
-  cursor: pointer;
+#analysis-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#analysis-actions div {
+  color: #94A3B8;
+  font-size: 12px;
+}
+
+#analysis-actions button {
+  width: 100%;
+}
+
+#analysis-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.file-report {
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: #111827;
+}
+
+.file-report h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #F1F5F9;
+}
+
+.file-report ul {
+  margin: 0;
+  padding: 0 0 0 18px;
+  list-style: disc;
+  color: #CBD5E1;
+  display: grid;
+  gap: 10px;
+}
+
+.file-report li {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.file-report li strong {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.file-report li em {
+  color: #94A3B8;
+  font-size: 12px;
+}
+
+.analysis-error,
+.analysis-empty,
+.repo-error {
+  color: #F1F5F9;
+  background: #111827;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.analysis-error {
+  border-color: #7f1d1d;
+}
+
+.analysis-empty {
+  border-color: #334155;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.status-high {
+  background: rgba(239, 68, 68, 0.12);
+  color: #EF4444;
+}
+
+.status-medium {
+  background: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
+}
+
+.status-low {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748B;
 }

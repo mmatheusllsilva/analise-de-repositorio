@@ -8,38 +8,35 @@
   </head>
   <body>
     <div id="app">
-      <!--
-        UI de seleção de repositório e botão "Analisar".
-        Esta página deve permanecer apenas com marcação e referências de script.
-      -->
-      <header>
-        <h1>GitHub IA Analyzer</h1>
+      <header class="app-header">
+        <div class="brand-stack">
+          <div class="brand-title">GitHub IA Analyzer</div>
+          <div class="brand-subtitle">Análise de segurança e qualidade de código</div>
+        </div>
+
+        <div id="auth-status" class="auth-panel">
+          <div id="not-logged-in" class="auth-card">
+            <button id="login-btn" class="button-primary">Login com GitHub</button>
+          </div>
+
+          <div id="logged-in" class="auth-card hidden">
+            <div class="user-row">
+              <img id="user-avatar" alt="avatar" width="36" height="36" />
+              <div class="user-text">
+                <span id="user-name" class="user-name">Usuário</span>
+                <span class="user-label">Conectado</span>
+              </div>
+            </div>
+            <button id="logout-btn" class="button-secondary">Logout</button>
+          </div>
+        </div>
       </header>
 
-      <section id="auth-status">
-        <!-- Estado de autenticação: mostra botão de login ou usuário + logout -->
-        <div id="not-logged-in">
-          <button id="login-btn">Login com GitHub</button>
-        </div>
-
-        <div id="logged-in" style="display:none">
-          <img id="user-avatar" alt="avatar" width="32" height="32" />
-          <span id="user-name"></span>
-          <button id="logout-btn">Logout</button>
-        </div>
-      </section>
-
-      <section id="repo-selection">
-        <!-- Placeholder para seleção de repositório (após login) -->
-      </section>
-
-      <section id="analysis-actions">
-        <!-- Placeholder para botão de análise -->
-      </section>
-
-      <section id="analysis-result">
-        <!-- Placeholder para resultado da análise estruturada -->
-      </section>
+      <main class="main-content">
+        <section id="repo-selection" class="card-section"></section>
+        <section id="analysis-actions" class="card-section"></section>
+        <section id="analysis-result" class="card-section"></section>
+      </main>
     </div>
 
     <script type="module" src="popup.js"></script>

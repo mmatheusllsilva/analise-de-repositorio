@@ -1,6 +1,11 @@
 import { analyzeRepository } from '../lib/ai.js';
 import { getRepoMeta, getRepoTreeFiles, fetchFileContent } from '../lib/github.js';
 
+export const config = {
+  runtime: 'nodejs18.x',
+  maxDuration: 60,
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -46,7 +51,7 @@ export default async function handler(req, res) {
     }));
 
     const validFiles = (fetched.filter(Boolean)).sort((a,b) => b.size - a.size);
-    const maxFiles = 15;
+    const maxFiles = 10;
     const selected = validFiles.slice(0, maxFiles);
     const partial = validFiles.length > maxFiles || candidates.length > maxFiles;
 
