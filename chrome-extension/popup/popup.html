@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub IA Analyzer</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!--
+        UI de seleção de repositório e botão "Analisar".
+        Esta página deve permanecer apenas com marcação e referências de script.
+      -->
+      <header>
+        <h1>GitHub IA Analyzer</h1>
+      </header>
+
+      <section id="auth-status">
+        <!-- Estado de autenticação: mostra botão de login ou usuário + logout -->
+        <div id="not-logged-in">
+          <button id="login-btn">Login com GitHub</button>
+        </div>
+
+        <div id="logged-in" style="display:none">
+          <img id="user-avatar" alt="avatar" width="32" height="32" />
+          <span id="user-name"></span>
+          <button id="logout-btn">Logout</button>
+        </div>
+      </section>
+
+      <section id="repo-selection">
+        <!-- Placeholder para seleção de repositório (após login) -->
+      </section>
+
+      <section id="analysis-actions">
+        <!-- Placeholder para botão de análise -->
+      </section>
+
+      <section id="analysis-result">
+        <!-- Placeholder para resultado da análise estruturada -->
+      </section>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+# Variáveis de ambiente (nunca commitar)
+.env
+.env.local
+.env*.local
+
+# Dependências
+node_modules/
+
+# Build/cache da Vercel
+.vercel
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
